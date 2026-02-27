@@ -11,3 +11,5 @@ class User {
         this.senha = senha;
     }
 }
+
+export default User;

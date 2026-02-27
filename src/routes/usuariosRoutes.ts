@@ -1,10 +1,12 @@
-import express from 'express';
-import router from 'express';
+import { Router } from 'express';
+import { createUsers, listUsers, listUsersId, updateUser, deleteUser } from '../controllers/usuariosController';
 
-const app = router();
+const route = Router();
 
-app.get('/users', (req: express.Request, res: express.Response) => {
-    res.send('OLÁ MUNDO!');
-});
+route.get('/', listUsers);
+route.get('/:id', listUsersId);
+route.post('/', createUsers);
+route.put('/:id', updateUser);
+route.delete('/:id', deleteUser);
 
-export default app;
+export default route;
