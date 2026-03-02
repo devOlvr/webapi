@@ -1,5 +1,5 @@
 import express from 'express'
-import HttpError from '../errors/HttpError'
+import HttpError from '@/errors/HttpError'
 
 export default function errorHandler(
   err: any,

@@ -1,7 +1,7 @@
 import express from 'express';
-import { createUser, listAllUsers, updateUserById, deleteUserById, listUserById } from '../services/usuariosService';
-import ValidationError from '../errors/ValidationError';
-import NotFoundError from '../errors/NotFoundError';
+import { createUser, listAllUsers, updateUserById, deleteUserById, listUserById } from '@/services/usuariosService';
+import ValidationError from '@/errors/ValidationError';
+import NotFoundError from '@/errors/NotFoundError';
 
 function validateAllowedFields(body: any, allowed: string[]) {
     const keys = Object.keys(body || {})

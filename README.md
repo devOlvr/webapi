@@ -12,6 +12,7 @@
 - Services: [usuariosService.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/services/usuariosService.ts)
 - Banco de Dados: [database.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/config/database.ts)
 - Middleware de erros: [errorHandler.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/middlewares/errorHandler.ts)
+- Middleware de RBAC: [checkRole.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/middlewares/checkRole.ts)
 - Erros (POO): 
   - [HttpError](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/errors/HttpError.ts)
   - [ValidationError](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/errors/ValidationError.ts)
@@ -19,10 +20,11 @@
   - [ConflictError](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/errors/ConflictError.ts)
   - [InternalServerError](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/errors/InternalServerError.ts)
 - Model exemplo: [user.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/models/user.ts)
+ - Enum de usuários: [enumUsuario.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/enum/enumUsuario.ts)
 
 **Dependências**
 - express, mysql2, dotenv
-- dev: typescript, ts-node-dev, @types/express, @types/node
+- dev: typescript, ts-node-dev, tsconfig-paths, @types/express, @types/node
 
 **Configuração**
 - Crie o arquivo `.env` na raiz:
@@ -33,15 +35,22 @@
   - DB_PORT=3306
 
 **Scripts**
-- Iniciar em dev: `npm run dev`
+- Iniciar em dev (com aliases): `npm run dev`
 - Typecheck: `npx tsc --noEmit`
 
 **Banco**
-- Inicialização: [initDatabase](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/config/database.ts#L23-L43)
+- Inicialização: [initDatabase](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/config/database.ts#L23-L46)
 - Pool de conexões (promises) e helper `query(sql, params)`:
   - [database.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/config/database.ts#L17-L22)
+- Estrutura da tabela `users`:
+  - id INT AUTO_INCREMENT PRIMARY KEY
+  - nome VARCHAR(65) NOT NULL
+  - email VARCHAR(65) NOT NULL UNIQUE
+  - senha VARCHAR(65) NOT NULL
+  - tipoUsuario ENUM('administrator','comum') NOT NULL DEFAULT 'comum'
+  - (se usar o script SQL) created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
-**Endpoints Usuários**
+**Endpoints Usuários (protegidos por RBAC)**
 - POST /users
   - body: { "nome": "Fulano", "email": "fulano@exemplo.com", "senha": "123456" }
   - valida campos obrigatórios e rejeita chaves desconhecidas
@@ -59,6 +68,7 @@
   - erros: 404 NOT_FOUND, 409 DUPLICATE_EMAIL
 - DELETE /users/:id
   - 404 NOT_FOUND se não existir
+ - Todas as rotas acima estão protegidas por checkRole exigindo papel ADMINISTRATOR.
 
 **Tratamento de Erros**
 - Use classes OOP de erro e delegue ao middleware:
@@ -67,6 +77,22 @@
   - Lance ConflictError para violação de unicidade (email).
   - Erros não mapeados viram 500.
 - O middleware está registrado no `server.ts` após as rotas.
+
+**Controle de Acesso (RBAC)**
+- Middleware: [checkRole.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/middlewares/checkRole.ts)
+- Enum: [enumUsuario.ts](file:///c:/Users/gabriel.teixeira/Downloads/projeto-estudos/webapi/src/enum/enumUsuario.ts)
+- As rotas de usuários usam `checkRole([EnumUsuario.ADMINISTRATOR])`.
+- É necessário popular `req.user` antes das rotas (ex.: via middleware de autenticação).
+- Exemplo simples para testes:
+
+```ts
+// server.ts (exemplo de mock para Postman)
+import EnumUsuario from './src/enum/enumUsuario'
+app.use((req, _res, next) => {
+  req.user = { role: EnumUsuario.ADMINISTRATOR }
+  next()
+})
+```
 
 **Padrão de Controllers**
 - Controllers não acessam banco; apenas validam input, chamam services e usam `next(err)` para propagação de erros.
@@ -98,6 +124,7 @@ export async function query<T = any>(sql: string, params?: any[]) {
 - Crie o service com a operação de banco.
 - Crie o controller que recebe a requisição, valida dados e chama o service.
 - Registre a rota em `src/routes/...`.
+- Se precisar proteger com RBAC, aplique `checkRole([EnumUsuario.ADMINISTRATOR])` (ou outros papéis).
 - Exemplo (rota de produtos):
   - Service: `src/services/produtosService.ts`
   - Controller: `src/controllers/produtosController.ts`
@@ -129,6 +156,7 @@ export default Produto
 - Use placeholders (?) e arrays de parâmetros para evitar SQL injection.
 - Valide chaves desconhecidas e campos obrigatórios nos controllers.
 - Padronize respostas e erros via middleware.
+- Use aliases do TypeScript com `@/*` (ex.: `@/controllers/...`, `@/services/...`, `@/errors/...`, `@/config/database`).
 - Não exponha segredos no código; use `.env`.
 
 **Como rodar**

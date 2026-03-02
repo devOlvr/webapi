@@ -36,9 +36,10 @@ export async function initDatabase() {
     await db.query(`
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            nome VARCHAR(255) NOT NULL,
-            email VARCHAR(255) NOT NULL UNIQUE,
-            senha VARCHAR(255) NOT NULL
+            nome VARCHAR(65) NOT NULL,
+            email VARCHAR(65) NOT NULL UNIQUE,
+            senha VARCHAR(65) NOT NULL,
+            tipoUsuario ENUM('administrator', 'comum') NOT NULL DAFAULT 'comum'
         )
     `)
 }
